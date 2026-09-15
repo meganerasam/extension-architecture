@@ -1,0 +1,550 @@
+<title>La fabrique des listes</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root {
+  --bg: #F3F5F4;
+  --card: #FFFFFF;
+  --wash: #E9EEF6;
+  --ink: #202B34;
+  --muted: #5D6C77;
+  --line: #D2DAD7;
+  --accent: #2D5FA8;
+  --c-block: #B0453C;
+  --c-allow: #37764B;
+  --c-veto: #A9791C;
+  --c-redirect: #6A4FA3;
+  --c-data: #47788D;
+  --warn-bg: #FBF3E2;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #12181D;
+    --card: #1B2329;
+    --wash: #1F2B3A;
+    --ink: #E2E8EC;
+    --muted: #93A3AD;
+    --line: #2D3941;
+    --accent: #7EA7E3;
+    --c-block: #E0837A;
+    --c-allow: #7FC494;
+    --c-veto: #D9AE55;
+    --c-redirect: #AC93DD;
+    --c-data: #85B4C8;
+    --warn-bg: #2C2617;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #12181D;
+  --card: #1B2329;
+  --wash: #1F2B3A;
+  --ink: #E2E8EC;
+  --muted: #93A3AD;
+  --line: #2D3941;
+  --accent: #7EA7E3;
+  --c-block: #E0837A;
+  --c-allow: #7FC494;
+  --c-veto: #D9AE55;
+  --c-redirect: #AC93DD;
+  --c-data: #85B4C8;
+  --warn-bg: #2C2617;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: 'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.55;
+  margin: 0;
+  padding: 0 20px 80px;
+}
+.wrap { max-width: 1180px; margin: 0 auto; }
+header.top { padding: 56px 0 8px; }
+.eyebrow {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+h1 {
+  font-family: 'IBM Plex Sans Condensed', 'IBM Plex Sans', sans-serif;
+  font-weight: 700;
+  font-size: clamp(34px, 5vw, 52px);
+  line-height: 1.05;
+  margin: 10px 0 14px;
+  text-wrap: balance;
+}
+.lede { max-width: 70ch; color: var(--muted); font-size: 17px; margin: 0 0 22px; }
+.legend { display: flex; flex-wrap: wrap; gap: 10px 14px; margin: 6px 0 10px; }
+.chip {
+  display: inline-flex; align-items: center; gap: 7px;
+  font-family: 'IBM Plex Mono', monospace; font-size: 12.5px;
+  color: var(--ink);
+  background: var(--card); border: 1px solid var(--line); border-radius: 999px;
+  padding: 4px 12px;
+}
+.dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+.d-block { background: var(--c-block); }
+.d-allow { background: var(--c-allow); }
+.d-veto { background: var(--c-veto); }
+.d-redirect { background: var(--c-redirect); }
+.d-data { background: var(--c-data); }
+.d-muted { background: var(--muted); }
+
+section { margin: 46px 0 0; }
+h2 {
+  font-family: 'IBM Plex Sans Condensed', sans-serif;
+  font-weight: 700; font-size: 27px; margin: 0 0 6px;
+}
+.kicker {
+  font-family: 'IBM Plex Mono', monospace; font-size: 12px;
+  letter-spacing: .08em; text-transform: uppercase; color: var(--accent);
+  margin: 0 0 4px;
+}
+section > p { max-width: 72ch; }
+p code, li code, td code {
+  font-family: 'IBM Plex Mono', monospace; font-size: .86em;
+  background: var(--wash); border-radius: 4px; padding: 1px 5px;
+}
+figure { margin: 22px 0 0; }
+.scroll { overflow-x: auto; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 10px; }
+figure svg { display: block; height: auto; width: 100%; min-width: 1020px; }
+figure.small svg { min-width: 900px; }
+figcaption { font-size: 13.5px; color: var(--muted); margin-top: 10px; max-width: 80ch; }
+
+svg text { font-family: 'IBM Plex Sans', sans-serif; font-size: 12.5px; fill: var(--ink); }
+svg .t-band { font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: .12em; fill: var(--muted); }
+svg .t-stage { font-family: 'IBM Plex Sans Condensed', sans-serif; font-size: 16px; font-weight: 700; }
+svg .t-grp { font-family: 'IBM Plex Sans Condensed', sans-serif; font-size: 13.5px; font-weight: 600; letter-spacing: .05em; fill: var(--muted); }
+svg .t-mono { font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; fill: var(--muted); }
+svg .t-monoink { font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; fill: var(--ink); }
+svg .t-small { font-size: 11px; fill: var(--muted); }
+svg .t-warn { font-size: 12px; fill: var(--c-veto); font-weight: 600; }
+svg .bx { fill: var(--card); stroke: var(--line); rx: 10; }
+svg .bx-in { fill: var(--bg); stroke: var(--line); }
+svg .bx-stage { fill: var(--wash); stroke: var(--accent); stroke-opacity: .45; }
+svg .ar { stroke: var(--muted); stroke-width: 1.6; fill: none; }
+
+.callout {
+  background: var(--card); border: 1px solid var(--line); border-left: 4px solid var(--accent);
+  border-radius: 10px; padding: 16px 20px; max-width: 78ch; margin: 18px 0;
+}
+.callout p { margin: 6px 0; }
+.callout .q { font-weight: 600; }
+
+table.matrix {
+  border-collapse: collapse; width: 100%; font-size: 13.5px;
+  background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+}
+.tablewrap { overflow-x: auto; margin-top: 18px; border-radius: 12px; }
+table.matrix th, table.matrix td { padding: 8px 12px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+table.matrix th {
+  font-family: 'IBM Plex Sans Condensed', sans-serif; font-size: 13px; letter-spacing: .04em;
+  color: var(--muted); background: var(--wash); position: sticky; top: 0;
+}
+table.matrix td.num { font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+table.matrix tr.grp td {
+  font-family: 'IBM Plex Sans Condensed', sans-serif; font-weight: 700; font-size: 13px;
+  letter-spacing: .06em; text-transform: uppercase; color: var(--muted); background: var(--bg);
+}
+table.matrix td .sub { display: block; font-size: 11.5px; color: var(--muted); }
+.role { display: inline-flex; align-items: center; gap: 6px; font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; white-space: nowrap; }
+td .name { font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; }
+
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 14px; margin-top: 18px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; }
+.card h3 { font-family: 'IBM Plex Sans Condensed', sans-serif; font-size: 16px; margin: 0 0 6px; }
+.card p { font-size: 13.5px; color: var(--muted); margin: 0; }
+
+footer { margin-top: 60px; font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--muted); }
+</style>
+
+<div class="wrap">
+<header class="top">
+  <p class="eyebrow">Automated All-In-One List V2 · état du 2026-09-10</p>
+  <h1>La fabrique des listes</h1>
+  <p class="lede">Tout ce qui entre, tout ce qui est filtré, tout ce qui sort — avec les vrais noms
+  des onglets, les vrais fichiers et les comptes du run courant. Cinq étages&nbsp;: les miroirs, la
+  curation, la vérification DNS, l'assemblage, et le catalogue à la carte.</p>
+  <div class="legend">
+    <span class="chip"><span class="dot d-block"></span>block — bloque des requêtes</span>
+    <span class="chip"><span class="dot d-redirect"></span>redirect — intercepte une navigation</span>
+    <span class="chip"><span class="dot d-allow"></span>allow — re-autorise / whitelist</span>
+    <span class="chip"><span class="dot d-veto"></span>veto — retire, ne produit jamais de règle</span>
+    <span class="chip"><span class="dot d-data"></span>data — servi tel quel, jamais mergé</span>
+  </div>
+</header>
+
+<section id="carte">
+  <p class="kicker">01 · La grande carte</p>
+  <h2>Qui fait quoi, du haut vers le bas</h2>
+  <figure>
+    <div class="scroll">
+    <svg viewBox="0 0 1240 1878" role="img" aria-label="Carte complète du pipeline : sources (Google Sheets, listes publiques, flotte) → ingest → curate → verify → compile → catalog → les six marques.">
+      <defs>
+        <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" style="fill: var(--muted);"/>
+        </marker>
+      </defs>
+
+      <!-- ═══ SOURCES ═══ -->
+      <text class="t-band" x="20" y="30">LES SOURCES — TOUT ENTRE PAR ICI, EN L'ÉTAT</text>
+
+      <rect class="bx" x="20" y="46" width="650" height="302" rx="10"/>
+      <text class="t-grp" x="40" y="74">GOOGLE SHEETS — 15 ONGLETS</text>
+      <!-- col 1 -->
+      <circle cx="46" cy="100" r="4" style="fill:var(--c-block)"/><text x="60" y="104">popup <tspan class="t-mono">4 771</tspan></text>
+      <circle cx="46" cy="128" r="4" style="fill:var(--c-data)"/><text x="60" y="132">traffic-quality-trackers <tspan class="t-mono">24 marchés</tspan></text>
+      <circle cx="46" cy="156" r="4" style="fill:var(--c-allow)"/><text x="60" y="160">default-whitelist <tspan class="t-mono">178</tspan></text>
+      <circle cx="46" cy="184" r="4" style="fill:var(--c-block)"/><text x="60" y="188">default-blocklist <tspan class="t-mono">2</tspan></text>
+      <circle cx="46" cy="212" r="4" style="fill:var(--c-veto)"/><text x="60" y="216">default-blocklist-not-to-add <tspan class="t-mono">21</tspan></text>
+      <circle cx="46" cy="240" r="4" style="fill:var(--muted)"/><text x="60" y="244">manual-whitelist <tspan class="t-mono">0 · rôle à décider</tspan></text>
+      <circle cx="46" cy="268" r="4" style="fill:var(--c-block)"/><text x="60" y="272">manual-blocklist <tspan class="t-mono">0</tspan></text>
+      <circle cx="46" cy="296" r="4" style="fill:var(--c-veto)"/><text x="60" y="300">omit-from-whitelist <tspan class="t-mono">34</tspan></text>
+      <!-- col 2 -->
+      <circle cx="360" cy="100" r="4" style="fill:var(--c-veto)"/><text x="374" y="104">omit-from-blocklist <tspan class="t-mono">14</tspan></text>
+      <circle cx="360" cy="128" r="4" style="fill:var(--c-allow)"/><text x="374" y="132">download-sites <tspan class="t-mono">50</tspan></text>
+      <circle cx="360" cy="156" r="4" style="fill:var(--c-data)"/><text x="374" y="160">whitelisted-domains-injection-enabled <tspan class="t-mono">344</tspan></text>
+      <circle cx="360" cy="184" r="4" style="fill:var(--c-data)"/><text x="374" y="188">tracking-whitelist <tspan class="t-mono">46</tspan></text>
+      <circle cx="360" cy="212" r="4" style="fill:var(--c-data)"/><text x="374" y="216">allow-request-domains <tspan class="t-mono">19</tspan></text>
+      <circle cx="360" cy="240" r="4" style="fill:var(--c-data)"/><text x="374" y="244">initiator-allowed-domains <tspan class="t-mono">316</tspan></text>
+      <circle cx="360" cy="268" r="4" style="fill:var(--c-data)"/><text x="374" y="272">rule101xtra <tspan class="t-mono">307</tspan></text>
+      <text class="t-small" x="374" y="300">les 5 en bleu-gris = « standalone », servis tels quels</text>
+
+      <rect class="bx" x="690" y="46" width="310" height="302" rx="10"/>
+      <text class="t-grp" x="710" y="74">LISTES PUBLIQUES</text>
+      <circle cx="716" cy="100" r="4" style="fill:var(--c-block)"/><text x="730" y="104">EasyList <tspan class="t-mono">15 fichiers ABP</tspan></text>
+      <circle cx="716" cy="128" r="4" style="fill:var(--c-block)"/><text x="730" y="132">EasyPrivacy <tspan class="t-mono">22 fichiers</tspan></text>
+      <circle cx="716" cy="156" r="4" style="fill:var(--c-block)"/><text x="730" y="160">Fanboy annoyance/agegate <tspan class="t-mono">15</tspan></text>
+      <circle cx="716" cy="184" r="4" style="fill:var(--c-block)"/><text x="730" y="188">EasyList Adult <tspan class="t-mono">7</tspan></text>
+      <text class="t-small" x="730" y="214">— fichiers hosts (domaines bruts) —</text>
+      <circle cx="716" cy="238" r="4" style="fill:var(--c-block)"/><text x="730" y="242">AdGuard DNS <tspan class="t-mono">176 587</tspan></text>
+      <circle cx="716" cy="266" r="4" style="fill:var(--c-block)"/><text x="730" y="270">Anudeep <tspan class="t-mono">42 358</tspan></text>
+      <circle cx="716" cy="294" r="4" style="fill:var(--c-block)"/><text x="730" y="298">Peter Lowe <tspan class="t-mono">3 542</tspan> · KADhosts <tspan class="t-mono">43 996</tspan></text>
+      <text class="t-small" x="730" y="326">KADhosts part en lane popup (arnaques)</text>
+
+      <rect class="bx" x="1020" y="46" width="200" height="302" rx="10"/>
+      <text class="t-grp" x="1040" y="74">LA FLOTTE</text>
+      <text x="1040" y="104">4 backends</text>
+      <text x="1040" y="130">votes « Allow » des</text>
+      <text x="1040" y="152">utilisateurs</text>
+      <circle cx="1046" cy="182" r="4" style="fill:var(--c-allow)"/><text x="1060" y="186" class="t-monoink">1 479 domaines</text>
+      <text class="t-mono" x="1040" y="210">all-extension.csv</text>
+      <circle cx="1046" cy="244" r="4" style="fill:var(--muted)"/><text x="1060" y="248">blocklist : réservé</text>
+      <text class="t-small" x="1040" y="272">(vide aujourd'hui)</text>
+
+      <line class="ar" x1="345" y1="348" x2="345" y2="376" marker-end="url(#ar)"/>
+      <line class="ar" x1="845" y1="348" x2="845" y2="376" marker-end="url(#ar)"/>
+      <line class="ar" x1="1120" y1="348" x2="1120" y2="376" marker-end="url(#ar)"/>
+
+      <!-- ═══ INGEST ═══ -->
+      <rect class="bx-stage" x="20" y="380" width="1200" height="62" rx="10"/>
+      <text class="t-stage" x="40" y="406">0 · INGEST — miroirs verbatim, fail-closed</text>
+      <text class="t-mono" x="40" y="428">→ sources/ · ingest.yml toutes les 12 h · extension.yml 06:00 · fetch louche ⇒ on garde le miroir précédent, run rouge</text>
+
+      <line class="ar" x1="620" y1="442" x2="620" y2="472" marker-end="url(#ar)"/>
+
+      <!-- ═══ CURATE ═══ -->
+      <rect class="bx" x="20" y="476" width="1200" height="466" rx="10"/>
+      <text class="t-stage" x="40" y="506">1 · CURATE — la seule couche de soustraction</text>
+      <text class="t-mono" x="40" y="528">build/curate/curate.php → sanitized/ (committé : chaque décision de curation = un diff git)</text>
+
+      <rect class="bx-in" x="40" y="548" width="420" height="196" rx="8"/>
+      <text class="t-grp" x="60" y="576">LE SET DE CURATION · 887 DOMAINES</text>
+      <circle cx="66" cy="600" r="4" style="fill:var(--c-veto)"/><text x="80" y="604">omit-from-blocklist <tspan class="t-mono">14</tspan></text>
+      <circle cx="66" cy="626" r="4" style="fill:var(--c-veto)"/><text x="80" y="630">∪ default-blocklist-not-to-add <tspan class="t-mono">21</tspan></text>
+      <circle cx="66" cy="652" r="4" style="fill:var(--c-allow)"/><text x="80" y="656">∪ download-sites <tspan class="t-mono">50</tspan></text>
+      <circle cx="66" cy="678" r="4" style="fill:var(--c-allow)"/><text x="80" y="682">∪ whitelist flotte ≥ 50 votes <tspan class="t-mono">812</tspan></text>
+      <text class="t-small" x="80" y="706">(votes − omit-from-whitelist − omit-from-blocklist)</text>
+      <text class="t-small" x="80" y="726">matché domaine + tous les sous-domaines</text>
+
+      <rect class="bx-in" x="40" y="760" width="420" height="120" rx="8"/>
+      <text class="t-grp" x="60" y="788">LE PLANCHER NEVER-BLOCK · 35</text>
+      <text x="60" y="814">omit-from-blocklist ∪ default-blocklist-not-to-add</text>
+      <text class="t-small" x="60" y="838">rien ne peut bloquer ces domaines —</text>
+      <text class="t-small" x="60" y="858">pas même les appends manuels</text>
+
+      <rect class="bx-in" x="490" y="548" width="710" height="332" rx="8"/>
+      <text class="t-grp" x="510" y="576">UNE RECETTE PAR SOURCE</text>
+      <text x="510" y="606">popup − set <tspan class="t-mono">→ sanitized/gsheet/popup.json · 4 486</tspan></text>
+      <text x="510" y="646">AdGuard · Anudeep · P. Lowe · KADhosts − set <tspan class="t-mono">→ sanitized/hosts/*.txt</tspan></text>
+      <text x="510" y="686">easylist : ABP → DNR (10 générateurs) puis scrub <tspan class="t-mono">→ sanitized/easylist/&lt;liste&gt;/…</tspan></text>
+      <text x="510" y="726">download-sites : normalise − les 2 omit <tspan class="t-mono">→ lane allow · 50 règles prio 50</tspan></text>
+      <text x="510" y="766">votes flotte ≥ 50 − les 2 omit <tspan class="t-mono">→ extension/user-whitelist.json · 812</tspan></text>
+      <text class="t-small" x="510" y="806">default-whitelist ne passe PAS ici (c'est un produit direct) · le cosmétique n'est jamais curé</text>
+      <text class="t-small" x="510" y="846">default-blocklist · manual-blocklist · flotte-blocklist : AU-DESSUS de la curation — seul le plancher les freine</text>
+
+      <text class="t-mono" x="40" y="918">rapport de tout ce qui a été retiré : state/review/curation-drops.json</text>
+
+      <line class="ar" x1="620" y1="942" x2="620" y2="972" marker-end="url(#ar)"/>
+
+      <!-- ═══ VERIFY ═══ -->
+      <rect class="bx-stage" x="20" y="976" width="1200" height="62" rx="10"/>
+      <text class="t-stage" x="40" y="1002">2 · VERIFY — DNS par paliers : les morts ne shippent jamais</text>
+      <text class="t-mono" x="40" y="1024">state/domain-ledger.json · 270 142 domaines (95 k actifs · 27 k morts · backlog) · verify.yml 00:30 · default/manual-blocklist jamais testés (décision)</text>
+
+      <line class="ar" x1="620" y1="1038" x2="620" y2="1068" marker-end="url(#ar)"/>
+
+      <!-- ═══ COMPILE ═══ -->
+      <rect class="bx" x="20" y="1072" width="1200" height="428" rx="10"/>
+      <text class="t-stage" x="40" y="1102">3 · COMPILE — assemblage pur, aucune décision de curation</text>
+      <text class="t-mono" x="40" y="1124">build/compile/compile.php → dist/ · compile.yml 07:00 + après chaque curate vert</text>
+
+      <rect class="bx-in" x="40" y="1144" width="570" height="92" rx="8"/>
+      <circle cx="60" cy="1166" r="4" style="fill:var(--c-redirect)"/>
+      <text x="74" y="1170" style="font-weight:600">LANE NAVIGATION → règles REDIRECT (prio 3 · main_frame)</text>
+      <text x="60" y="1194">popup et KADhosts chunkés SÉPARÉMENT − morts − plancher</text>
+      <text class="t-mono" x="60" y="1216">41 909 dom. (popup 1 chunk · KADhosts 8) → popup-curated.json</text>
+
+      <rect class="bx-in" x="630" y="1144" width="570" height="92" rx="8"/>
+      <circle cx="650" cy="1166" r="4" style="fill:var(--c-block)"/>
+      <text x="664" y="1170" style="font-weight:600">LANE TRACKERS → BLOCK + jumeau REDIRECT</text>
+      <text x="650" y="1194">AdGuard ∪ Anudeep ∪ P. Lowe − morts − déjà couvert par easylist</text>
+      <text class="t-mono" x="650" y="1216">block sous-ressources prio 1 · jumeau navigation prio 3</text>
+
+      <rect class="bx-in" x="40" y="1252" width="570" height="92" rx="8"/>
+      <circle cx="60" cy="1274" r="4" style="fill:var(--c-block)"/>
+      <text x="74" y="1278" style="font-weight:600">LANE CHIRURGICALE → BLOCK + ALLOW + COSMETIC</text>
+      <text x="60" y="1302">lanes easylist curées + veto break-glass (curated/vetoes.txt)</text>
+      <text class="t-mono" x="60" y="1324">+ lane allow download-sites (prio 50, jamais rétrécie)</text>
+
+      <rect class="bx-in" x="630" y="1252" width="570" height="92" rx="8"/>
+      <circle cx="650" cy="1274" r="4" style="fill:var(--c-block)"/>
+      <text x="664" y="1278" style="font-weight:600">LANE APPENDS → BLOCK, au-dessus de la curation</text>
+      <text x="650" y="1302">default-blocklist (2) + manual-blocklist (0) + flotte-BL (0)</text>
+      <text class="t-mono" x="650" y="1324">− plancher uniquement · conflits flagués, jamais silencieux</text>
+
+      <rect class="bx-stage" x="40" y="1360" width="1160" height="48" rx="8"/>
+      <text x="60" y="1382" style="font-weight:600">MERGE : re-ID par bandes <tspan class="t-mono">redirect 11000+ · block 21000+ · modifyHeaders 31000+ · allow 41000+</tspan></text>
+      <text class="t-mono" x="60" y="1400">budgets Chrome : ≤ 30 000 règles · ≤ 5 000 redirect/modifyHeaders · ≤ 1 000 regex</text>
+
+      <rect class="bx-in" x="40" y="1420" width="1160" height="66" rx="8"/>
+      <text class="t-monoink" x="60" y="1444">network/rules.json 10 286 (+ rules-hosts 60 · rules-easylist 10 174) · whitelist/ 177·812·50 · blocklist/popup.json 2 040</text>
+      <text class="t-monoink" x="60" y="1468">blocklist/popup-curated.json 41 909 · cosmetic/ 4 · traffic_quality/ 24 · standalone/ 5 · derived/ 2 · manifest.json</text>
+
+      <line class="ar" x1="620" y1="1500" x2="620" y2="1530" marker-end="url(#ar)"/>
+
+      <!-- ═══ CATALOG ═══ -->
+      <rect class="bx" x="20" y="1534" width="1200" height="238" rx="10"/>
+      <text class="t-stage" x="40" y="1564">4 · CATALOG — l'offre à la carte</text>
+      <text class="t-mono" x="40" y="1586">build/catalog/catalog.php → dist/catalog/ · 117 fichiers · ~71 MB · index catalog.json (rôles, comptes, notes)</text>
+
+      <rect class="bx-in" x="40" y="1604" width="373" height="148" rx="8"/>
+      <text class="t-grp" x="60" y="1630">RAW — LE BRUT</text>
+      <text x="60" y="1656">chaque source telle quelle</text>
+      <text class="t-mono" x="60" y="1678">domains.json + rules/ par type</text>
+      <text class="t-warn" x="60" y="1704">⚠ avant tout filtrage — inspection</text>
+      <text class="t-warn" x="60" y="1724">seulement, ne jamais servir tel quel</text>
+
+      <rect class="bx-in" x="427" y="1604" width="373" height="148" rx="8"/>
+      <text class="t-grp" x="447" y="1630">CURATED — APRÈS SA RECETTE</text>
+      <text x="447" y="1656">copie fidèle de sanitized/</text>
+      <text x="447" y="1678">chaque fichier = ruleset autonome</text>
+      <text class="t-mono" x="447" y="1700">IDs 1..N par fichier</text>
+      <text x="447" y="1724">appelable individuellement, de n'importe où</text>
+
+      <rect class="bx-in" x="814" y="1604" width="386" height="148" rx="8"/>
+      <text class="t-grp" x="834" y="1630">MERGED — LES CUMULS PAR TYPE</text>
+      <text class="t-mono" x="834" y="1656">rules/ block · redirect · allow (IDs canoniques)</text>
+      <text class="t-mono" x="834" y="1680">domains/ block 212 556 · redirect 172 853</text>
+      <text class="t-mono" x="834" y="1704">domains/ allow 1 011 · cosmetic 8 930</text>
+      <text class="t-small" x="834" y="1728">le grand merge canonique reste network/rules.json</text>
+
+      <line class="ar" x1="620" y1="1772" x2="620" y2="1802" marker-end="url(#ar)"/>
+
+      <!-- ═══ CONSUMERS ═══ -->
+      <rect class="bx-stage" x="20" y="1806" width="1200" height="62" rx="10"/>
+      <text class="t-stage" x="40" y="1832">LES 6 MARQUES — via leurs miroirs backend, jamais GitHub en direct</text>
+      <text class="t-mono" x="40" y="1854">Ninja Block · Ad Block Ghost · Wonder Blocker · Ad Block North · Ad Block Pro · Stop Ads Now</text>
+    </svg>
+    </div>
+    <figcaption>La carte complète : les trois familles de sources en haut, les cinq étages du
+    pipeline, et les six marques en bas. Les pastilles de couleur donnent la polarité de chaque
+    source (légende en tête de page). Les chiffres sont ceux du run du 2026-09-10.</figcaption>
+  </figure>
+
+  <div class="callout">
+    <p class="q">La carte en clair — étage par étage, sans jargon :</p>
+    <p><strong>Les sources</strong> (en haut) : tout ce qui entre. Tes Google Sheets — les listes
+    que tu tiens à la main —, des listes publiques reconnues (la famille EasyList et quatre
+    fichiers «&nbsp;hosts&nbsp;»), et les votes «&nbsp;Autoriser&nbsp;» remontés par les
+    utilisateurs des extensions.</p>
+    <p><strong>0 · Ingest</strong> : le robot photocopie chaque source telle quelle, plusieurs
+    fois par jour. Si une source répond bizarrement, on garde la photocopie précédente et le run
+    passe au rouge — une donnée douteuse n'entre jamais dans la chaîne.</p>
+    <p><strong>1 · Curate</strong> : le tri. On construit d'abord la liste des domaines à ne
+    jamais bloquer (tes vetos + les sites massivement autorisés par les utilisateurs), puis on
+    la soustrait de chaque source — chacune selon sa propre recette, et chaque retrait est
+    tracé dans un rapport.</p>
+    <p><strong>2 · Verify</strong> : chaque domaine candidat est testé régulièrement — existe-t-il
+    encore&nbsp;? Un domaine mort n'est jamais publié.</p>
+    <p><strong>3 · Compile</strong> : l'assemblage. Toutes les listes triées deviennent un seul
+    fichier de règles pour Chrome, avec des plafonds chiffrés et des vérifications qui bloquent
+    la publication au moindre doute.</p>
+    <p><strong>4 · Catalog</strong> : la même matière, rangée à la carte — chaque source
+    séparément, en version brute et en version triée, plus les cumuls — pour prendre exactement
+    ce dont on a besoin.</p>
+    <p><strong>Les 6 marques</strong> (en bas) : les extensions ne lisent jamais GitHub
+    directement — chaque marque copie les fichiers sur son propre serveur et les sert à ses
+    utilisateurs.</p>
+  </div>
+</section>
+
+<section id="matrice">
+  <p class="kicker">02 · La matrice du catalogue</p>
+  <h2>Chaque source, ses deux formes, ses deux étages</h2>
+  <p>C'est ton croquis, rempli avec les vrais chiffres. Une cellule vide est une information&nbsp;:
+  un veto ne produit pas de règles, <code>download-sites</code> n'a pas de règles brutes (la
+  normalisation <em>est</em> la curation), le cosmétique n'existe que pour EasyList/Fanboy.
+  Tout est sous <code>dist/catalog/</code>, indexé par <code>catalog.json</code>.</p>
+
+  <div class="tablewrap">
+  <table class="matrix">
+    <thead>
+      <tr><th>Source</th><th>Rôle</th><th>Brut · domaines</th><th>Brut · règles</th><th>Curé · domaines</th><th>Curé · règles</th></tr>
+    </thead>
+    <tbody>
+      <tr class="grp"><td colspan="6">Google Sheets</td></tr>
+      <tr><td><span class="name">popup</span><span class="sub">popunders, arnaques — la matière de la lane redirect</span></td><td><span class="role"><span class="dot d-block"></span>block</span></td><td class="num">4 771</td><td class="num">redirect · 1</td><td class="num">4 486</td><td class="num">redirect · 1</td></tr>
+      <tr><td><span class="name">default-whitelist</span><span class="sub">produit direct — ne filtre rien ; curé = copie de whitelist/default.json</span></td><td><span class="role"><span class="dot d-allow"></span>allow</span></td><td class="num">178</td><td class="num">allow · 1</td><td class="num">177</td><td class="num">allow · 1</td></tr>
+      <tr><td><span class="name">default-blocklist</span><span class="sub">append : au-dessus de la curation, freiné par le seul plancher</span></td><td><span class="role"><span class="dot d-block"></span>block</span></td><td class="num">2</td><td class="num">block · 1</td><td class="num">2</td><td class="num">block · 1</td></tr>
+      <tr><td><span class="name">manual-blocklist</span><span class="sub">append, vide aujourd'hui</span></td><td><span class="role"><span class="dot d-block"></span>block</span></td><td class="num">0</td><td class="num">block · 0</td><td class="num">0</td><td class="num">block · 0</td></tr>
+      <tr><td><span class="name">default-blocklist-not-to-add</span><span class="sub">veto librement éditable : domaine listé = zéro règle, où que ce soit</span></td><td><span class="role"><span class="dot d-veto"></span>veto</span></td><td class="num">21</td><td class="num">—</td><td class="num">—</td><td class="num">—</td></tr>
+      <tr><td><span class="name">omit-from-whitelist</span><span class="sub">veto des votes truqués — hôte EXACT uniquement</span></td><td><span class="role"><span class="dot d-veto"></span>veto</span></td><td class="num">34</td><td class="num">—</td><td class="num">—</td><td class="num">—</td></tr>
+      <tr><td><span class="name">omit-from-blocklist</span><span class="sub">plancher never-block, réservé aux domaines maison — domaine + sous-domaines</span></td><td><span class="role"><span class="dot d-veto"></span>veto</span></td><td class="num">14</td><td class="num">—</td><td class="num">—</td><td class="num">—</td></tr>
+      <tr><td><span class="name">download-sites</span><span class="sub">double rôle : membre du set + source de la lane allow</span></td><td><span class="role"><span class="dot d-allow"></span>allow</span></td><td class="num">50</td><td class="num">—</td><td class="num">50</td><td class="num">allow · 50</td></tr>
+      <tr><td><span class="name">manual-whitelist</span><span class="sub">miroir sans recette — rôle à décider</span></td><td><span class="role"><span class="dot d-muted"></span>?</span></td><td class="num">0</td><td class="num">—</td><td class="num">—</td><td class="num">—</td></tr>
+      <tr><td><span class="name">5 onglets standalone</span><span class="sub">injection-enabled 344 · tracking-whitelist 46 · allow-request 19 · initiator-allowed 316 · rule101xtra 307 — servis tels quels via dist/standalone/</span></td><td><span class="role"><span class="dot d-data"></span>data</span></td><td class="num">1 032</td><td class="num">—</td><td class="num">—</td><td class="num">—</td></tr>
+      <tr><td><span class="name">traffic-quality-trackers</span><span class="sub">éclaté en 24 fichiers marché à l'ingest → dist/traffic_quality/</span></td><td><span class="role"><span class="dot d-data"></span>data</span></td><td class="num">24 marchés</td><td class="num">—</td><td class="num">—</td><td class="num">—</td></tr>
+      <tr class="grp"><td colspan="6">Listes publiques</td></tr>
+      <tr><td><span class="name">easylist</span><span class="sub">domaines = extraction partielle (ancres pures + requestDomains)</span></td><td><span class="role"><span class="dot d-block"></span>block+allow</span></td><td class="num">47 221</td><td class="num">block 1 860 · allow 532</td><td class="num">47 052</td><td class="num">block 1 823 · allow 532 · cosmetic</td></tr>
+      <tr><td><span class="name">easyprivacy</span></td><td><span class="role"><span class="dot d-block"></span>block+allow</span></td><td class="num">37 735</td><td class="num">block 6 272 · allow 514</td><td class="num">37 633</td><td class="num">block 6 122 · allow 514</td></tr>
+      <tr><td><span class="name">fanboy</span></td><td><span class="role"><span class="dot d-block"></span>block+allow</span></td><td class="num">318</td><td class="num">block 387 · allow 19</td><td class="num">317</td><td class="num">block 380 · allow 19 · cosmetic</td></tr>
+      <tr><td><span class="name">easylist adult</span></td><td><span class="role"><span class="dot d-block"></span>block+allow</span></td><td class="num">767</td><td class="num">block 772 · allow 12</td><td class="num">750</td><td class="num">block 751 · allow 12</td></tr>
+      <tr><td><span class="name">adguard dns</span></td><td><span class="role"><span class="dot d-block"></span>block</span></td><td class="num">176 587</td><td class="num">block 36 · redirect 36</td><td class="num">176 217</td><td class="num">block 36 · redirect 36</td></tr>
+      <tr><td><span class="name">anudeep</span></td><td><span class="role"><span class="dot d-block"></span>block</span></td><td class="num">42 358</td><td class="num">block 9 · redirect 9</td><td class="num">41 095</td><td class="num">block 9 · redirect 9</td></tr>
+      <tr><td><span class="name">peter lowe</span></td><td><span class="role"><span class="dot d-block"></span>block</span></td><td class="num">3 542</td><td class="num">block 1 · redirect 1</td><td class="num">3 486</td><td class="num">block 1 · redirect 1</td></tr>
+      <tr><td><span class="name">kadhosts</span><span class="sub">lane popup — redirect seulement</span></td><td><span class="role"><span class="dot d-redirect"></span>redirect</span></td><td class="num">43 996</td><td class="num">redirect · 9</td><td class="num">43 986</td><td class="num">redirect · 9</td></tr>
+      <tr class="grp"><td colspan="6">La flotte</td></tr>
+      <tr><td><span class="name">whitelist flotte</span><span class="sub">brut = votes fusionnés pré-barre (contient le funnel de coercition) ; curé = ≥ 50 votes − les 2 omit</span></td><td><span class="role"><span class="dot d-allow"></span>allow</span></td><td class="num">1 479</td><td class="num">allow · 1</td><td class="num">812</td><td class="num">allow · 1</td></tr>
+      <tr><td><span class="name">blocklist flotte</span><span class="sub">réservé — cellules déclarées, vides aujourd'hui</span></td><td><span class="role"><span class="dot d-block"></span>block</span></td><td class="num">0</td><td class="num">block · 0</td><td class="num">0</td><td class="num">block · 0</td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<section id="gardefous">
+  <p class="kicker">03 · Les garde-fous</p>
+  <h2>Pourquoi un run cassé ne peut rien publier</h2>
+  <div class="cards">
+    <div class="card"><h3>Fail-closed, partout</h3><p>Chaque étage calcule tout, vérifie tout, puis seulement écrit (écritures atomiques). Un fetch louche, une lane vide, une assertion ratée&nbsp;: le run passe rouge et l'état précédent continue d'être servi.</p></div>
+    <div class="card"><h3>Deux sceaux de provenance</h3><p><code>sanitized/provenance.json</code> lie la curation aux miroirs exacts qui l'ont produite&nbsp;; depuis le 2026-09-10, <code>manifest.json</code> porte aussi ce sceau — le catalogue refuse un <code>dist/</code> qui ne vient pas de la génération courante de <code>sanitized/</code>.</p></div>
+    <div class="card"><h3>Le plancher never-block</h3><p><code>omit-from-blocklist</code> ∪ <code>default-blocklist-not-to-add</code>&nbsp;: aucun vote, aucune liste publique, aucun append manuel ne peut faire bloquer ces domaines. Vérifié par assertion à chaque étage.</p></div>
+    <div class="card"><h3>Budgets Chrome</h3><p>≤&nbsp;30&nbsp;000 règles, ≤&nbsp;5&nbsp;000 redirect/modifyHeaders, ≤&nbsp;1&nbsp;000 regex — assertés dans le code ET dans le YAML. Aujourd'hui&nbsp;: 10&nbsp;287 / 56 / 56.</p></div>
+    <div class="card"><h3>Change gate</h3><p>Un mouvement de ±30&nbsp;% des règles ou une chute de 20&nbsp;% des domaines shippés retient la publication — un empoisonnement upstream ne part jamais en autopilote. Confirmation explicite requise.</p></div>
+    <div class="card"><h3>Déterminisme + shadow-diff</h3><p>Deux runs sur les mêmes entrées = octets identiques (aucun timestamp dans les artefacts). Le shadow-diff face au cache de production&nbsp;: 0 divergence inexpliquée.</p></div>
+  </div>
+</section>
+
+<section id="annuaire">
+  <p class="kicker">04 · L'annuaire des chemins</p>
+  <h2>Tout ce que tu peux appeler, et ce qu'il y a dedans</h2>
+  <p>Tous les chemins sont relatifs à la racine publiée <code>dist/</code> (servie en commits
+  git, consommée via les miroirs backend). Deux index font autorité&nbsp;:
+  <code>manifest.json</code> pour le cœur, <code>catalog/catalog.json</code> pour le catalogue —
+  chacun donne sha256, taille et compte par fichier.</p>
+
+  <div class="tablewrap">
+  <table class="matrix">
+    <thead><tr><th>Chemin</th><th>Type</th><th>Contenu</th><th>Nb</th></tr></thead>
+    <tbody>
+      <tr class="grp"><td colspan="4">Le cœur — ce que la flotte appelle</td></tr>
+      <tr><td class="num">network/rules.json</td><td class="num">rules DNR</td><td>LE ruleset mergé (bandes redirect 11000+ · block 21000+ · allow 41000+), <code>__EXT_ID__</code> à substituer côté serveur/client</td><td class="num">10 286</td></tr>
+      <tr><td class="num">network/rules-hosts.json</td><td class="num">rules DNR</td><td>sous-ensemble par origine : les règles issues des 4 listes hosts (chunks trackers + jumeaux + chunks KADhosts) — IDs canoniques, cross-référençables</td><td class="num">60</td></tr>
+      <tr><td class="num">network/rules-easylist.json</td><td class="num">rules DNR</td><td>sous-ensemble par origine : les lanes chirurgicales easylist (jumeaux inclus) — IDs canoniques</td><td class="num">10 174</td></tr>
+      <tr><td class="num">whitelist/default.json</td><td class="num">domaines</td><td>whitelist org (default-whitelist − les 2 omit) — sync backend</td><td class="num">177</td></tr>
+      <tr><td class="num">whitelist/community.json</td><td class="num">domaines</td><td>whitelist flotte (votes ≥ 50 − les 2 omit)</td><td class="num">812</td></tr>
+      <tr><td class="num">whitelist/download-sites.json</td><td class="num">domaines</td><td>sites de téléchargement, forme normalisée + vetoée</td><td class="num">50</td></tr>
+      <tr><td class="num">blocklist/popup.json</td><td class="num">domaines</td><td>la part SHIPPÉE de l'onglet popup (sous-ensemble strict du suivant)</td><td class="num">2 040</td></tr>
+      <tr><td class="num">blocklist/popup-curated.json</td><td class="num">domaines</td><td>la lane navigation complète à plat : popup ∪ KADhosts − morts − set de curation</td><td class="num">41 909</td></tr>
+      <tr><td class="num">cosmetic/generic.css</td><td class="num">css</td><td>hide générique (une règle CSS, sélecteurs fusionnés)</td><td class="num">14 430</td></tr>
+      <tr><td class="num">cosmetic/specific.json</td><td class="num">css</td><td>hide par domaine — {domaine&nbsp;: [sélecteurs]}</td><td class="num">8 433</td></tr>
+      <tr><td class="num">cosmetic/extended.json</td><td class="num">css</td><td>règles extended / css-injection par domaine</td><td class="num">317</td></tr>
+      <tr><td class="num">cosmetic/unhide.json</td><td class="num">css</td><td>exceptions cosmétiques (#@#) par domaine</td><td class="num">530</td></tr>
+      <tr><td class="num">manifest.json</td><td class="num">index</td><td>l'index du cœur : version dérivée du contenu + sceau <code>sanitized_provenance</code></td><td class="num">—</td></tr>
+      <tr class="grp"><td colspan="4">traffic_quality/ — par marché, servi tel quel</td></tr>
+      <tr><td class="num">traffic_quality/&lt;marché&gt;.json</td><td class="num">domaines</td><td>hostnames du marché · marchés&nbsp;: <code>global</code> + rollups <code>apac latam nordics</code> + <code>at br ca ch de dk es fi fr hk in it mx nl no se sg tw uk us</code></td><td class="num">24 fichiers</td></tr>
+      <tr class="grp"><td colspan="4">standalone/ — les 5 onglets servis verbatim, jamais mergés</td></tr>
+      <tr><td class="num">standalone/whitelisted-domains-injection-enabled.json</td><td class="num">domaines</td><td>injection scripts autorisée</td><td class="num">344</td></tr>
+      <tr><td class="num">standalone/tracking-whitelist.json</td><td class="num">domaines</td><td>ex-règle 5005</td><td class="num">46</td></tr>
+      <tr><td class="num">standalone/allow-request-domains.json</td><td class="num">domaines</td><td>ex-règle 5006 (requêtes)</td><td class="num">19</td></tr>
+      <tr><td class="num">standalone/initiator-allowed-domains.json</td><td class="num">domaines</td><td>ex-règle 5006 (initiateurs)</td><td class="num">316</td></tr>
+      <tr><td class="num">standalone/rule101xtra.json</td><td class="num">domaines</td><td>ex-règle CSP-strip 33</td><td class="num">307</td></tr>
+      <tr class="grp"><td colspan="4">derived/ — inspection, appelé par rien</td></tr>
+      <tr><td class="num">derived/community.json</td><td class="num">domaines</td><td>copie octet-identique de whitelist/community.json</td><td class="num">812</td></tr>
+      <tr><td class="num">derived/to-filter-out-domains-set.json</td><td class="num">domaines</td><td>l'ensemble des domaines filtrés de toute source bloquante (omit-from-blocklist ∪ not-to-add ∪ download-sites ∪ whitelist flotte) — ex-curation-set.json, renommé 2026-09-10</td><td class="num">887</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2 style="margin-top:34px">Le catalogue — la grammaire des chemins</h2>
+  <p>Une seule grammaire pour les 117 fichiers. <code>&lt;source&gt;</code> est l'un des 25
+  identifiants du tableau ci-dessous&nbsp;; <code>&lt;type&gt;</code> dépend de la source.
+  Chaque fichier de règles porte ses IDs 1..N et se charge comme ruleset autonome —
+  <strong>sauf <code>raw/</code>, qui ne doit jamais être servi tel quel</strong>.</p>
+
+  <div class="tablewrap">
+  <table class="matrix">
+    <thead><tr><th>Motif</th><th>Type</th><th>Contenu</th></tr></thead>
+    <tbody>
+      <tr><td class="num">catalog/catalog.json</td><td class="num">index</td><td>l'index complet : rôle, matching, comptes, notes par cellule, sha256 par fichier</td></tr>
+      <tr><td class="num">catalog/raw/&lt;source&gt;/domains.json</td><td class="num">domaines</td><td>les domaines de la source, AVANT tout filtrage (miroir verbatim)</td></tr>
+      <tr><td class="num">catalog/raw/&lt;source&gt;/rules/&lt;type&gt;.json</td><td class="num">rules DNR</td><td>ses règles brutes, un fichier par type d'action</td></tr>
+      <tr><td class="num">catalog/curated/&lt;source&gt;/domains.json</td><td class="num">domaines</td><td>les domaines après la recette de curation de la source</td></tr>
+      <tr><td class="num">catalog/curated/&lt;source&gt;/rules/&lt;type&gt;.json</td><td class="num">rules DNR</td><td>ses règles curées — c'est ça qu'on consomme à la carte</td></tr>
+      <tr><td class="num">catalog/{raw,curated}/easylist-*/cosmetic/…</td><td class="num">css</td><td><code>unhide.json</code> (les 4 listes) · <code>specific.json</code> + <code>extended.json</code> + <code>generic.css</code> (easylist et fanboy seulement)</td></tr>
+      <tr><td class="num">catalog/merged/rules/{allow,block,redirect}.json</td><td class="num">rules DNR</td><td>sous-ensembles du canonique par type d'action — IDs canoniques conservés (cross-référençables vers network/rules.json)</td></tr>
+      <tr><td class="num">catalog/merged/domains/{allow,block,redirect,cosmetic}.json</td><td class="num">domaines</td><td>les cumuls de domaines par type : allow 1 011 · block 212 556 · redirect 172 853 · cosmetic 8 930</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="tablewrap">
+  <table class="matrix">
+    <thead><tr><th>&lt;source&gt;</th><th>raw/ contient</th><th>curated/ contient</th></tr></thead>
+    <tbody>
+      <tr class="grp"><td colspan="3">Google Sheets</td></tr>
+      <tr><td class="num">gsheet-popup</td><td class="num">domains · rules/redirect</td><td class="num">domains · rules/redirect</td></tr>
+      <tr><td class="num">gsheet-default-whitelist</td><td class="num">domains · rules/allow</td><td class="num">domains · rules/allow</td></tr>
+      <tr><td class="num">gsheet-default-blocklist</td><td class="num">domains · rules/block</td><td class="num">domains · rules/block</td></tr>
+      <tr><td class="num">gsheet-manual-blocklist</td><td class="num">domains · rules/block</td><td class="num">domains · rules/block</td></tr>
+      <tr><td class="num">gsheet-download-sites</td><td class="num">domains</td><td class="num">domains · rules/allow</td></tr>
+      <tr><td class="num">gsheet-default-blocklist-not-to-add</td><td class="num">domains</td><td class="num">— (veto)</td></tr>
+      <tr><td class="num">gsheet-omit-from-whitelist</td><td class="num">domains</td><td class="num">— (veto)</td></tr>
+      <tr><td class="num">gsheet-omit-from-blocklist</td><td class="num">domains</td><td class="num">— (veto)</td></tr>
+      <tr><td class="num">gsheet-manual-whitelist</td><td class="num">domains</td><td class="num">— (rôle à décider)</td></tr>
+      <tr><td class="num">gsheet-whitelisted-domains-injection-enabled · gsheet-tracking-whitelist · gsheet-allow-request-domains · gsheet-initiator-allowed-domains · gsheet-rule101xtra</td><td class="num">domains</td><td class="num">— (servis via standalone/)</td></tr>
+      <tr><td class="num">gsheet-traffic-quality</td><td class="num" colspan="2">entrée d'index seulement → dist/traffic_quality/</td></tr>
+      <tr class="grp"><td colspan="3">Listes publiques</td></tr>
+      <tr><td class="num">easylist-easylist · easylist-easyprivacy · easylist-fanboy · easylist-adult</td><td class="num">domains · rules/{all, block, allow} · cosmetic</td><td class="num">domains · rules/{all, block, allow} · cosmetic</td></tr>
+      <tr><td class="num">hosts-adguarddns · hosts-anudeep · hosts-peterlowe</td><td class="num">domains · rules/{block, redirect}</td><td class="num">domains · rules/{block, redirect}</td></tr>
+      <tr><td class="num">hosts-kadhosts</td><td class="num">domains · rules/redirect</td><td class="num">domains · rules/redirect</td></tr>
+      <tr class="grp"><td colspan="3">La flotte</td></tr>
+      <tr><td class="num">extension-whitelist</td><td class="num">domains · rules/allow</td><td class="num">domains · rules/allow</td></tr>
+      <tr><td class="num">extension-blocklist</td><td class="num">domains · rules/block (vides aujourd'hui)</td><td class="num">domains · rules/block</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p style="font-size:13.5px;color:var(--muted);max-width:78ch">Exemples concrets&nbsp;:
+  <code>catalog/curated/gsheet-popup/rules/redirect.json</code> = les règles redirect issues du
+  seul onglet popup · <code>catalog/curated/hosts-kadhosts/domains.json</code> = les domaines
+  KAD après curation · <code>catalog/merged/domains/block.json</code> = tous les domaines
+  ciblés par une règle block, toutes sources confondues.</p>
+</section>
+
+<footer>
+  Généré le 2026-09-10 · chiffres du run courant (dist/manifest.json + dist/catalog/catalog.json) ·
+  repo github.com/meganerasam/blocklist-v4 · détail par fichier : STATUS.md
+</footer>
+</div>
