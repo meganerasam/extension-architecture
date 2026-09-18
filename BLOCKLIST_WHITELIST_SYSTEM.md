@@ -1,6 +1,7 @@
 # The Blocklist / Whitelist System — "Automated All In One List V2"
 
-> **Facts current as of 2026-09-10 (evening).** Every number, path and threshold was verified
+> **Facts current as of 2026-09-18** (base text 2026-09-10 evening; the 2026-09-18 pass covers
+> the twin builder §10.2, the default-list migration §17.1 and the new standalone artifact). Every number, path and threshold was verified
 > against the factory repo at `~/Desktop/Dev/00 - Blocklist automation/Automated All In One
 > List V2` (live at `github.com/meganerasam/blocklist-v4`, private) and the legacy backends.
 >
@@ -690,8 +691,29 @@ The easylist generators run *inside the curate stage* (into the gitignored
   cosmetic passed through uncurated) plus the **download-sites allow lane** (50 rules,
   priority 2, exactly the 7 mapped sub-resource types — compile re-validates every rule on
   load). The merged feed is vetoed (`curated/vetoes.txt`) and re-ID'd; main-frame-only
-  domain blocks get redirect twins (with curation-covered initiators stripped, and the twin
-  skipped entirely when that would widen its scope).
+  domain blocks get redirect twins — but **only when the source is a bare domain block**
+  (no `urlFilter`, no `domainType`), tightened 2026-09-18 (commit `057674e`).
+
+  **Why the rule is that strict.** The twin is always `regexFilter ^http.+` — a
+  `regexSubstitution` redirect needs a `regexFilter` — so it structurally *cannot* carry the
+  source rule's `urlFilter` or `domainType`. Building one from a scoped source therefore
+  widens it into a blanket main-frame redirect of everything in that scope. The 2026-09-08
+  pass stripped curation-covered initiators and skipped a twin left with no scope, which was
+  correct but incomplete: it framed the problem as a whitelist problem when the widening
+  happened regardless of any whitelist. A scoped source now keeps its block rule and loses
+  only the blocked-page landing. **Under-redirecting is the only safe direction on this axis**,
+  because a wrong twin hijacks navigation that no client-side whitelist can counter.
+
+  Measured effect: redirect twins **63 → 48**, hijacked initiators **85 → 19** (66 sites
+  freed). Worst offender was `|about:` scoped to 51 initiators — every navigation from
+  `dood.*`, `streamtape.*`, `uptostream.*`, `popads.net`, `imagetwist.com` … landed on the
+  blocked page. Also gone: `||hltv.org^*=|` → all of hltv.org, `|http*://*?` →
+  pornhub/redtube/tube8/youporn/socialmediagirls, `||facebook.com/ads/ig_redirect/` → all of
+  instagram.com, `||rentalcars.com/?affiliateCode=` → all of seatguru.com. All 13 surviving
+  initiator-scoped twins carry **both** `initiatorDomains` and `requestDomains`, so they fire
+  only on navigation from X to a specific blocked destination. Skipped twins are listed in
+  `state/review/compile-drops.json` → `twin_scoped_source_skipped`, with the source pattern
+  and the scope that would have been widened.
 
 ### 10.3 Appends — above the curation set, floored only by I ∪ E
 
@@ -1102,7 +1124,7 @@ audit trail.
 | `blocklist-v3` `merged-dnr/merge_dnr.php` + server `generate_compiled_rules.php` | `build/compile/compile.php` | ID bands, chunking-by-5,000, main-frame redirect twins, `__EXT_ID__`, atomic writes inherited; **last-50k truncation dropped** (policy retention); traffic-driven triggers dropped (cron + workflow_run) |
 | server `generate_cosmetic_rules.php` (flip-flop guard) | compile cosmetic step | specific+unhide cancel-out logic preserved |
 | `whitelist-domains` repo (`whitelistes.txt/2/3`) | Sheet C (174) · Sheet H (whitelistes3's 13) | two of three files frozen since 2025-03 |
-| hardcoded arrays in `ninja-adb21.php` (~1,480) | Sheets C, D/E, H, K–O | e.g. `default_excluded_domains()` → C · `default_blockdom()` → D then Sheet E (2026-09-10: those 21 ad-network domains now deliberately produce NO rule) · protected search hosts → H |
+| hardcoded arrays in `ninja-adb21.php` (~1,480) | Sheets C, D/E, H, K–O | e.g. `default_excluded_domains()` → C · `default_blockdom()` → D then Sheet E (2026-09-10: those 21 ad-network domains now deliberately produce NO rule) · protected search hosts → H. **LOOP CLOSED 2026-09-18**: the two arrays are gone from the endpoint — both functions now read a mirrored cache (`generate_default_whitelist.php` ← `dist/whitelist/default.json`; `generate_default_blocklist.php` ← `dist/standalone/default-blocklist-not-to-add.json`), shared guards in `blocklistv4_mirror.php`. Motivation was measured drift: the same `default_blockdom()` array read 23 on ninja/stopads and 20 on adbpro/wonder, so `googleadservices.com` was not blocked by default on two of four extensions with nothing recording it as a decision. `isProtectedDomain()` stays hardcoded — it is a regex over `google.<tld>`/gstatic/yahoo/yimg, not a list |
 | `blocklist-v3/whitelist/from-extension/` (CSVs read by nothing) | `sources/extension/whitelist/` + the user whitelist | the loop finally closes |
 | v3 `generate_whitelist_files.php` (Sheet B splitter) | ingest split in `fetch_sheets.php` | **deleted 2026-09-07** (carried a stale source URL) |
 | Firebog Easylist + Admiral hosts lists | **dropped** | 99.6 % / 92.4 % duplicates (§6.1) |

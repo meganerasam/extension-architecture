@@ -248,6 +248,22 @@ backups per backend in `_backups_hardening_2026-09-10/`).
    to preserve applied rules (`EXTENSION_COMPOSITION.md` §23.3). **Every bodyless
    `exit` on the request path routes through `db_down_response()`** — a real client
    flow must never receive an empty body.
+   **Since 2026-09-18 (Ninja `-dev` first) those two helpers hold no domains of their
+   own**: they read caches mirrored from blocklist-v4 —
+   `default_whitelist_cache.json` ← `dist/whitelist/default.json` (Sheet C, 169) and
+   `default_blocklist_cache.json` ← `dist/standalone/default-blocklist-not-to-add.json`
+   (sheet tab `blocklist_but_do_not_add`, 21) — written by
+   `generate_default_whitelist.php` / `generate_default_blocklist.php` over the shared
+   `blocklistv4_mirror.php` guards, and triggered by sections 9) and 10) on the same
+   success-keyed 24 h TTL as 5)–7). The DB-outage path is unaffected: both are still
+   pure file reads with no DB and no network. **Why it was worth doing**: the same two
+   arrays were copy-pasted into four brand endpoints and had already drifted —
+   `default_blockdom()` was 23 on ninja/stopads and 20 on adbpro/wonder, so
+   `googleadservices.com` went unblocked by default on half the fleet. **Deploy note**:
+   unlike the community mirror, an empty list here means *no* system whitelist / *no*
+   default block for a brand-new install, so both caches are **seeded at deploy**; an
+   existing install is safe either way because the client no-ops on an empty array
+   (`identity.js:1092`).
 2. **Fatal safety net** (`register_shutdown_function`, family spec 2026-09-10).
    The exception handler cannot see compile-time fatals, OOM or timeouts; the
    shutdown handler catches those and — deliberately NOT calling
